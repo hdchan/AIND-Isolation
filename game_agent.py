@@ -3,7 +3,7 @@ test your agent's strength against a set of known agents using tournament.py
 and include the results in your report.
 """
 import random
-
+import math
 
 class SearchTimeout(Exception):
     """Subclass base exception for code clarity. """
@@ -40,9 +40,24 @@ def custom_score(game, player):
     if game.is_winner(player):
         return float("inf")
 
-    own_moves = len(game.get_legal_moves(player))
-    opp_moves = len(game.get_legal_moves(game.get_opponent(player)))
-    return float(own_moves - opp_moves)
+    tile_count = game.width * game.height
+    opp_tile = game._board_state[-2]
+    player_tile = game._board_state[-1]
+    mirrored_idx = tile_count + 1 - opp_tile
+
+    if player_tile == mirrored_idx:
+        # this is our desired position
+        return float(tile_count ** 2)
+    else:
+        # otherwise we will return the distance from our mirrored position
+        # we want to get close to it...
+        
+        w = mirrored_idx // game.height
+        h = mirrored_idx % game.height
+        # mirrored_tile = (w, h)
+        player_loc = game.get_player_location(player)
+        return float((w - player_loc[0]) ** 2 + (h - player_loc[1]) ** 2)
+        
 
 
 def custom_score_2(game, player):
@@ -73,9 +88,10 @@ def custom_score_2(game, player):
     if game.is_winner(player):
         return float("inf")
 
-    w, h = game.width / 2., game.height / 2.
-    y, x = game.get_player_location(player)
-    return float((h - y)**2 + (w - x)**2)
+    player_y, player_x = game.get_player_location(player)
+    opp_y, opp_x = game.get_player_location(game.get_opponent(player))
+    # incentivizing player to keep close to opponent
+    return float(-1 * (player_y - opp_y) ** 2 + (player_x - opp_y) ** 2)
 
 
 def custom_score_3(game, player):
@@ -106,7 +122,10 @@ def custom_score_3(game, player):
     if game.is_winner(player):
         return float("inf")
 
-    return float(len(game.get_legal_moves(player)))
+    w, h = game.width / 2., game.height / 2.
+    y, x = game.get_player_location(player)
+    # incentivizes our player to divide the board in half
+    return float(-1 * ((w - x)**2))
 
 
 class IsolationPlayer:
@@ -196,7 +215,6 @@ class MinimaxPlayer(IsolationPlayer):
             return best_move  # Handle any actions required after timeout as needed
 
         # Return the best move from the last completed search iteration
-        # print(best_move)
         return best_move
 
     def minimax(self, game, depth):

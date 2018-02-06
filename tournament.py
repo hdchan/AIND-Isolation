@@ -60,7 +60,8 @@ def play_round(cpu_agent, test_agents, win_counts, num_matches):
 
         # play all games and tally the results
         for game in games:
-            winner, _, termination = game.play(time_limit=TIME_LIMIT)
+            winner, history, termination = game.play(time_limit=TIME_LIMIT)
+            print(winner, history, termination)
             win_counts[winner] += 1
 
             if termination == "timeout":
